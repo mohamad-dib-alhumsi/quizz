@@ -1,0 +1,12 @@
+C:\rocteraa\ebse\auto-maze\quizz\quizz\obj\Debug\quizz.csproj.AssemblyReference.cache
+C:\rocteraa\ebse\auto-maze\quizz\quizz\obj\Debug\quizz.FormLogin.resources
+C:\rocteraa\ebse\auto-maze\quizz\quizz\obj\Debug\quizz.Properties.Resources.resources
+C:\rocteraa\ebse\auto-maze\quizz\quizz\obj\Debug\quizz.csproj.GenerateResource.cache
+C:\rocteraa\ebse\auto-maze\quizz\quizz\obj\Debug\quizz.csproj.CoreCompileInputs.cache
+C:\rocteraa\ebse\auto-maze\quizz\quizz\bin\Debug\quizz.exe.config
+C:\rocteraa\ebse\auto-maze\quizz\quizz\bin\Debug\quizz.exe
+C:\rocteraa\ebse\auto-maze\quizz\quizz\bin\Debug\quizz.pdb
+C:\rocteraa\ebse\auto-maze\quizz\quizz\obj\Debug\quizz.exe
+C:\rocteraa\ebse\auto-maze\quizz\quizz\obj\Debug\quizz.pdb
+C:\rocteraa\ebse\auto-maze\quizz\quizz\obj\Debug\quizz.exe.config
+C:\rocteraa\ebse\auto-maze\quizz\quizz\obj\Debug\quizz.FormQuiz.resources
