@@ -1,4 +1,5 @@
 ﻿using quizz.Data;
+using quizz.Forms;
 using quizz.Helpers;
 using quizz.Models;
 using System;
@@ -79,9 +80,21 @@ namespace quizz
 
             lblMessage.Text = $"Welkom, {_loggedUser.Username}";
 
-            var quizForm = new FormQuiz(_loggedUser);
-            quizForm.Show();
             this.Hide();
+            using (var setupForm = new FormQuizSetup(_loggedUser))
+            {
+                if (setupForm.ShowDialog() == DialogResult.OK)
+                {
+                    // Quiz is klaar, terug bij login
+                    this.Show();
+                }
+                else
+                {
+                    this.Show();
+                }
+            }
+
+
         }
     }
 }

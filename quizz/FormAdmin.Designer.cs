@@ -1,5 +1,6 @@
 ﻿namespace quizz
 {
+
     partial class FormAdmin
     {
         private System.ComponentModel.IContainer components = null;
@@ -32,6 +33,7 @@
             this.chkCorrect4 = new System.Windows.Forms.CheckBox();
             this.btnAddQuestion = new System.Windows.Forms.Button();
             this.SuspendLayout();
+
             // 
             // lblCategory
             // 

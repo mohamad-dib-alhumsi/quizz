@@ -66,6 +66,12 @@
     <Compile Include="FormQuiz.Designer.cs">
       <DependentUpon>FormQuiz.cs</DependentUpon>
     </Compile>
+    <Compile Include="FormQuizSetup.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormQuizSetup.Designer.cs">
+      <DependentUpon>FormQuizSetup.cs</DependentUpon>
+    </Compile>
     <Compile Include="Helpers\PasswordHelper.cs" />
     <Compile Include="Models\Models.cs" />
     <Compile Include="Program.cs" />
