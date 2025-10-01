@@ -10,3 +10,5 @@ C:\rocteraa\ebse\auto-maze\quizz\quizz\obj\Debug\quizz.exe
 C:\rocteraa\ebse\auto-maze\quizz\quizz\obj\Debug\quizz.pdb
 C:\rocteraa\ebse\auto-maze\quizz\quizz\obj\Debug\quizz.exe.config
 C:\rocteraa\ebse\auto-maze\quizz\quizz\obj\Debug\quizz.FormQuiz.resources
+C:\rocteraa\ebse\auto-maze\quizz\quizz\obj\Debug\quizz.Forms.FormQuizSetup.resources
+C:\rocteraa\ebse\auto-maze\quizz\quizz\obj\Debug\quizz.FormAdmin.resources

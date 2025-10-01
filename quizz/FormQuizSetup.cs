@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Data;
-using System.Data.SqlClient;
 using System.Windows.Forms;
 using quizz.Data;
 using quizz.Models;
@@ -14,6 +13,10 @@ namespace quizz.Forms
         public FormQuizSetup(User user)
         {
             InitializeComponent();
+
+            // Fix voor MissingManifestResourceException
+            this.Icon = null;
+
             _loggedUser = user;
             LoadCategories();
         }
@@ -21,6 +24,13 @@ namespace quizz.Forms
         private void LoadCategories()
         {
             var dt = Db.ExecuteSelect("SELECT CategoryId, Name FROM Categories");
+
+            // Extra optie: Alles
+            DataRow row = dt.NewRow();
+            row["CategoryId"] = 0;
+            row["Name"] = "Alles";
+            dt.Rows.InsertAt(row, 0);
+
             cmbCategories.DisplayMember = "Name";
             cmbCategories.ValueMember = "CategoryId";
             cmbCategories.DataSource = dt;
@@ -35,13 +45,13 @@ namespace quizz.Forms
             }
 
             int categoryId = Convert.ToInt32(cmbCategories.SelectedValue);
+
             using (var quizForm = new FormQuiz(_loggedUser, categoryId))
             {
                 this.Hide();
-                quizForm.ShowDialog(); // Quiz modal openen
-                this.DialogResult = DialogResult.OK; // hiermee sluiten we setup na quiz
+                quizForm.ShowDialog();
+                this.DialogResult = DialogResult.OK;
             }
         }
-
     }
 }

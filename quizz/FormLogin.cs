@@ -81,20 +81,25 @@ namespace quizz
             lblMessage.Text = $"Welkom, {_loggedUser.Username}";
 
             this.Hide();
-            using (var setupForm = new FormQuizSetup(_loggedUser))
+
+            if (_loggedUser.IsAdmin)
             {
-                if (setupForm.ShowDialog() == DialogResult.OK)
+                // Admin login
+                using (var adminForm = new FormAdmin(_loggedUser))
                 {
-                    // Quiz is klaar, terug bij login
-                    this.Show();
+                    adminForm.ShowDialog();
                 }
-                else
-                {
-                    this.Show();
-                }
+                this.Show();
             }
-
-
+            else
+            {
+                // Gewone gebruiker
+                using (var setupForm = new FormQuizSetup(_loggedUser))
+                {
+                    setupForm.ShowDialog();
+                }
+                this.Show();
+            }
         }
     }
 }

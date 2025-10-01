@@ -15,9 +15,13 @@ namespace quizz
         private List<Question> _quizQuestions;
         private int selectedCategoryId = -1;
 
-        // Timer + skip
+        // Hoofdquiz timer
         private int _timeLeft = 60;
         private bool _skipUsed = false;
+
+        // Vraag-timer
+        private Timer questionTimer;
+        private int _questionTimeLeft = 5;
 
         public FormQuiz(User user, int categoryId = -1)
         {
@@ -25,24 +29,43 @@ namespace quizz
             _loggedUser = user;
             selectedCategoryId = categoryId;
 
-            LoadQuestions(selectedCategoryId);
+            // Vraag-timer instellen
+            questionTimer = new Timer();
+            questionTimer.Interval = 1000;
+            questionTimer.Tick += QuestionTimer_Tick;
+
+            // Vragen laden
+            LoadQuestions(selectedCategoryId, null);
+
+            if (_quizQuestions.Count == 0)
+            {
+                MessageBox.Show("Geen vragen gevonden voor deze categorie!");
+                this.DialogResult = DialogResult.Cancel;
+                this.Close();
+                return;
+            }
+
             ShowQuestion();
-            StartTimer();
+            StartMainTimer();
         }
 
-        private void LoadQuestions(int? categoryId = null, int desiredCount = 10)
+        private void LoadQuestions(int? categoryId = null, int? desiredCount = null)
         {
             _quizQuestions = new List<Question>();
 
-            string sql = @"SELECT TOP (@n) QuestionId, Text, TimeLimitSeconds 
+            string sql = @"SELECT {0} QuestionId, Text, TimeLimitSeconds 
                            FROM Questions 
                            WHERE (@cat IS NULL OR CategoryId = @cat) 
                            ORDER BY NEWID()";
 
+            string topClause = desiredCount.HasValue ? $"TOP ({desiredCount.Value})" : "";
+            sql = string.Format(sql, topClause);
+
             var paramList = new List<SqlParameter>
             {
-                new SqlParameter("@n", desiredCount),
-                new SqlParameter("@cat", categoryId.HasValue ? (object)categoryId.Value : DBNull.Value)
+                new SqlParameter("@cat", categoryId.HasValue && categoryId.Value > 0
+                                       ? (object)categoryId.Value
+                                       : DBNull.Value)
             };
 
             var dtQuestions = Db.ExecuteSelect(sql, paramList.ToArray());
@@ -100,14 +123,22 @@ namespace quizz
             btnAnswer2.Tag = shuffledAnswers[1].IsCorrect;
             btnAnswer3.Tag = shuffledAnswers[2].IsCorrect;
             btnAnswer4.Tag = shuffledAnswers[3].IsCorrect;
+
+            // Reset vraag-timer
+            _questionTimeLeft = 5;
+            lblQuestionTimer.Text = $"Vraag tijd: {_questionTimeLeft}s";
+            questionTimer.Start();
         }
 
         private void btnAnswer_Click(object sender, EventArgs e)
         {
             Button clicked = sender as Button;
+            questionTimer.Stop();
 
             if ((bool)clicked.Tag)
                 _score++;
+            else
+                _score--;
 
             lblScore.Text = $"Score: {_score}";
 
@@ -128,18 +159,23 @@ namespace quizz
             ShowQuestion();
         }
 
-        private void StartTimer()
+        private void StartMainTimer()
         {
-            quizTimer.Interval = 1000; // 1 seconde
+            quizTimer.Interval = 1000;
             quizTimer.Tick += QuizTimer_Tick;
             quizTimer.Start();
         }
 
-
+        // 🔥 Alleen deze 2 event-handlers houden
         private void QuizTimer_Tick(object sender, EventArgs e)
         {
             _timeLeft--;
             lblTimer.Text = $"Tijd: {_timeLeft}s";
+
+            if (_timeLeft > 10)
+                lblTimer.ForeColor = System.Drawing.Color.Green;
+            else
+                lblTimer.ForeColor = System.Drawing.Color.Red;
 
             if (_timeLeft <= 0)
             {
@@ -148,9 +184,23 @@ namespace quizz
             }
         }
 
+        private void QuestionTimer_Tick(object sender, EventArgs e)
+        {
+            _questionTimeLeft--;
+            lblQuestionTimer.Text = $"Vraag tijd: {_questionTimeLeft}s";
+
+            if (_questionTimeLeft <= 0)
+            {
+                questionTimer.Stop();
+                currentQuestionIndex++;
+                ShowQuestion();
+            }
+        }
+
         private void btnEndQuiz_Click(object sender, EventArgs e)
         {
             quizTimer.Stop();
+            questionTimer.Stop();
             EndQuiz();
         }
 
@@ -163,25 +213,31 @@ namespace quizz
                         VALUES (@u, @c, @s, @d, @qc);
                         SELECT SCOPE_IDENTITY();";
 
+            var categoryParam = (selectedCategoryId <= 0)
+                ? (object)DBNull.Value
+                : selectedCategoryId;
+
             var gameId = Db.ExecuteScalar(sql,
                 new SqlParameter("@u", _loggedUser.UserId),
-                new SqlParameter("@c", selectedCategoryId == -1 ? (object)DBNull.Value : selectedCategoryId),
+                new SqlParameter("@c", categoryParam),
                 new SqlParameter("@s", _score),
                 new SqlParameter("@d", durationSeconds),
                 new SqlParameter("@qc", questionsCount)
             );
 
-            var dt = Db.ExecuteSelect(@"SELECT TOP 10 u.Username, g.Score, g.StartedAt
-                                        FROM Games g
-                                        JOIN Users u ON u.UserId = g.UserId
-                                        ORDER BY g.Score DESC, g.StartedAt ASC");
+            var dt = Db.ExecuteSelect(@"
+                SELECT TOP 10 u.Username, MAX(g.Score) AS Score, MIN(g.StartedAt) AS StartedAt
+                FROM Games g
+                JOIN Users u ON u.UserId = g.UserId
+                GROUP BY u.Username
+                ORDER BY Score DESC, StartedAt ASC
+            ");
             dgvScoreboard.DataSource = dt;
 
             int place = -1;
             for (int i = 0; i < dt.Rows.Count; i++)
             {
-                if (Convert.ToString(dt.Rows[i]["Username"]) == _loggedUser.Username &&
-                    Convert.ToInt32(dt.Rows[i]["Score"]) == _score)
+                if (Convert.ToString(dt.Rows[i]["Username"]) == _loggedUser.Username)
                 {
                     place = i + 1;
                     break;
@@ -189,17 +245,26 @@ namespace quizz
             }
 
             string message = place != -1
-                ? $"Gefeliciteerd! Je staat op plaats {place} in de top 10.\nJe eindscore is {_score}."
-                : $"Je eindscore is {_score}.";
+                ? $"Gefeliciteerd! Je staat op plaats {place} in de top 10.\nJe eindscore is {_score}.\n\nWil je opnieuw spelen of uitloggen?"
+                : $"Je eindscore is {_score}.\n\nWil je opnieuw spelen?";
 
-            MessageBox.Show(message, "Quiz Resultaat", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            this.DialogResult = DialogResult.OK;
+            var result = MessageBox.Show(message, "Quiz Resultaat", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
+                this.DialogResult = DialogResult.Retry;
+            }
+            else
+            {
+                this.DialogResult = DialogResult.Cancel;
+            }
         }
 
         private void FormQuiz_Load(object sender, EventArgs e)
         {
             lblTimer.Text = $"Tijd: {_timeLeft}s";
             lblScore.Text = "Score: 0";
+            lblQuestionTimer.Text = $"Vraag tijd: {_questionTimeLeft}s";
         }
     }
 }
